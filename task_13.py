@@ -64,4 +64,6 @@ key = 3
 message_encrypted = ceasar.encrypt(message, key)
 print(message_encrypted)
 ceasar.decrypt(message_encrypted)
-
+file_path = input('Куда сохранить файл: ')
+with open(file_path + '/ceasarcipher.txt', 'w', encoding='utf-8') as file:
+    file.write(ceasar.decrypt(message_encrypted))
