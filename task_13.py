@@ -1,4 +1,4 @@
-from enchant.checker import SpellChecker
+import enchant
 
 SYMBOL = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz1234567890 !?.'
 SYMBOL_LIST = list(SYMBOL)
@@ -14,11 +14,11 @@ class CeasarsCipher:
     def set_key(self, new_key: int) -> None:
         self.key = new_key
 
-    def decrypt(self, message) -> str:
+    def decrypt(self, message) -> tuple[str, int]:
         self.set_key(0)
         while True:
             message_list = list(message)
-            checker = SpellChecker('en_US')
+            checker = enchant.Dict('en_US')
             list_errors = []
             for i in range(len(message_list)):
                 if SYMBOL.find(message_list[i]) - self.key < 0:
@@ -29,21 +29,19 @@ class CeasarsCipher:
                     message_list[i] = SYMBOL_LIST[SYMBOL.find(message_list[i])
                                                   - self.key]
             message_decrypted = ''.join(message_list)
-            checker.set_text(message_decrypted)
-            for err in checker:
-                list_errors.append(err.word)
-            if (len(list_errors) == 0 or len(list_errors) == 1) \
-                    and len(list_errors) != len(message_decrypted.split(' ')):
-                print(f'Расшифрованное сообщение: {message_decrypted}, '
-                      f'ключ: {self.key}')
+            message_decrypted_list = message_decrypted.split()
+            for word in message_decrypted_list:
+                if not checker.check(word):
+                    list_errors.append(word)
+            if (len(list_errors) == 0 or len(list_errors) == 1) and \
+                    len(list_errors) != len(message_decrypted.split(' ')):
                 break
             elif self.key == len(SYMBOL_LIST) - 1:
                 print('Сообщение не было закодировано методом Цезаря')
                 break
             else:
                 self.key += 1
-        return f'Расшифрованное сообщение: {message_decrypted}, ' \
-               f'ключ: {self.key}'
+        return message_decrypted, self.key
 
     def encrypt(self, message: str, new_key) -> str:
         self.set_key(new_key)
@@ -55,15 +53,27 @@ class CeasarsCipher:
             else:
                 message_list[i] = SYMBOL_LIST[SYMBOL.find(message_list[i])
                                               + self.key]
-        return ''.join(message_list)
+        message_encrypted = ''.join(message_list)
+        return message_encrypted
 
 
 ceasar = CeasarsCipher()
-message = 'The vacation was a success'
+message_for_encryption = 'The vacation was a success'
 key = 3
-message_encrypted = ceasar.encrypt(message, key)
-print(message_encrypted)
-ceasar.decrypt(message_encrypted)
+message_encrypted = ceasar.encrypt(message_for_encryption, key)
+print(f'Зашифрованное сообщение: {message_encrypted}')
+print()
+
+message_for_decryption = 'Wkh.ydfdwlrq.zdv.d.vxffhvv'
+message_decrypted = ceasar.decrypt(message_for_decryption)
+print(f'Расшифрованное сообщение: {message_decrypted[0]}, '
+      f'ключ: {message_decrypted[1]}')
+print()
+foggoten_password = 'o3zR v..D0?yRA0R8FR8v47w0ER4.R1WdC!sLF5D'
+password = ceasar.decrypt(foggoten_password)
+print(f'Расшифрованное сообщение: {password[0]}, ключ: {password[1]}')
 file_path = input('Куда сохранить файл: ')
 with open(file_path + '/ceasarcipher.txt', 'w', encoding='utf-8') as file:
-    file.write(ceasar.decrypt(message_encrypted))
+    file.write(f'Расшифрованное сообщение: {message_decrypted[0]}, '
+               f'ключ: {message_decrypted[1]}\n')
+    file.write(f'Расшифрованное сообщение: {password[0]}, ключ: {password[1]}')
